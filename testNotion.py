@@ -16,12 +16,8 @@ def convert_mdx_to_gitbook(markdown_content):
     cleaned_content = re.sub(r'{[^}]+}', '', cleaned_content)  # Removes JSX expressions
 
     # Additional replacements for GitBook compatibility
-    # For example, you could replace custom MDX components with equivalent Markdown
-
     # Example: remove import/export statements, if present
     cleaned_content = re.sub(r'^(import|export).*\n', '', cleaned_content, flags=re.MULTILINE)
-
-    # Add other transformations if needed...
 
     return cleaned_content
 
@@ -42,8 +38,11 @@ if uploaded_files:
             # Convert the MDX content to GitBook-compatible Markdown
             gitbook_markdown = convert_mdx_to_gitbook(mdx_content)
             
-            # Save the converted Markdown to a file in the temporary directory
-            converted_file_path = Path(tmpdirname) / f"{uploaded_file.name.replace('.mdx', '.md')}"
+            # Create the output filename by replacing the .mdx extension with .md
+            output_filename = uploaded_file.name.replace(".mdx", ".md")
+            converted_file_path = Path(tmpdirname) / output_filename
+            
+            # Write the converted content to the new .md file
             with open(converted_file_path, "w", encoding="utf-8") as f:
                 f.write(gitbook_markdown)
             
