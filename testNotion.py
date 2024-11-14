@@ -73,7 +73,7 @@ def copy_and_rename_files(source_dir, target_dir, file_map):
             shutil.copy2(source_path, target_path)
 
 # Streamlit interface
-st.title("Notion to Markdown Converter")
+st.title("Notion to GitBook Markdown Converter")
 
 # Upload ZIP file
 uploaded_file = st.file_uploader("Upload your Notion export ZIP file", type="zip")
