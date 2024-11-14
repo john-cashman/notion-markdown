@@ -8,7 +8,7 @@ from urllib.parse import unquote
 import tempfile
 import base64
 
-# The functions you provided, slightly modified to work within Streamlit
+# Helper function to sanitize filenames
 def sanitize_filename(name):
     path_parts = Path(name).parts
     cleaned_parts = []
@@ -26,10 +26,12 @@ def sanitize_filename(name):
         cleaned_parts.append(cleaned)
     return str(Path(*cleaned_parts))
 
+# Check if file type is supported
 def is_supported_file(filename):
     supported_extensions = {'.md', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.mp4', '.mov', '.csv'}
     return Path(filename).suffix.lower() in supported_extensions
 
+# Build a file map of cleaned paths
 def build_link_database(source_dir):
     source_dir = Path(source_dir).resolve()
     file_map = {}
@@ -46,23 +48,31 @@ def build_link_database(source_dir):
                     skipped_files.append((file, str(e)))
     return file_map, skipped_files
 
+# Copy and rename files based on the file map
 def copy_and_rename_files(source_dir, target_dir, file_map):
     source_dir = Path(source_dir).resolve()
     target_dir = Path(target_dir).resolve()
+    
     for old_rel_path_str, new_rel_path_str in file_map.items():
         old_rel_path = Path(old_rel_path_str)
         new_rel_path = Path(new_rel_path_str)
         source_path = source_dir / old_rel_path
         target_path = target_dir / new_rel_path
+        
+        # Ensure target directory exists
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        
         if old_rel_path.suffix.lower() == '.md':
+            # Process markdown content if necessary
             with source_path.open('r', encoding='utf-8') as f:
                 content = f.read()
             with target_path.open('w', encoding='utf-8') as f:
                 f.write(content)  # Here you'd call `update_markdown_links` if needed
         else:
+            # Copy other files directly
             shutil.copy2(source_path, target_path)
 
-# Streamlit Interface
+# Streamlit interface
 st.title("Notion to Markdown Converter")
 
 # Upload ZIP file
@@ -77,7 +87,7 @@ if uploaded_file is not None:
         # Prepare target directory
         target_dir = Path(tmpdirname) / "markdown_export"
         
-        # Build and process files
+        # Build file map and process files
         file_map, skipped_files = build_link_database(zip_path)
         copy_and_rename_files(zip_path, target_dir, file_map)
         
@@ -95,3 +105,9 @@ if uploaded_file is not None:
             b64 = base64.b64encode(data).decode()
             href = f'<a href="data:application/zip;base64,{b64}" download="processed_markdown.zip">Download Processed Markdown ZIP</a>'
             st.markdown(href, unsafe_allow_html=True)
+
+        # Display skipped files if any
+        if skipped_files:
+            st.write("Skipped Files:")
+            for file, error in skipped_files:
+                st.write(f"{file}: {error}")
